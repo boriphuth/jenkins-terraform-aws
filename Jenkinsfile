@@ -8,7 +8,7 @@ try {
       checkout scm
     }
   }
-  stage(‘Set Terraform path’) {
+  stage('Set Terraform') {
    node {
    script {
         def tfHome = tool name: ‘Terraform’
