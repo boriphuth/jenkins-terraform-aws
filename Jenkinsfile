@@ -48,7 +48,7 @@ try {
     }
   }
 
-   stage('approve_notification') {
+   stage('approve') {
      node {
         office365ConnectorSend message: "Do you approve deployment? " + env.JOB_URL, status:"SUCCESS", webhookUrl:'https://outlook.office.com/webhook/a0f1d097-a33c-4109-ab36-73d4c945fb5c@71ad2f62-61e2-44fc-9e85-86c2827f6de9/JenkinsCI/f8eba51747c24d228397ffba6305c907/16de5a6e-4f56-40b3-8359-ee0ac3075bb9'
         script {
@@ -58,40 +58,39 @@ try {
      }
    }
 
-    stage('approve') {
-      when {
-        environment name: 'TERRAFORM_APPROVE', value: 'yes'
-      }
-       node {
-        withCredentials([[
-          $class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: credentialsId,
-          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]]) {
-          ansiColor('xterm') {
-            sh 'terraform apply -auto-approve'
-            sh 'terraform show'
-          }
+    if (env.TERRAFORM_APPROVE == 'yes'){
+        stage('apply') {
+            node {
+                withCredentials([[
+                $class: 'AmazonWebServicesCredentialsBinding',
+                credentialsId: credentialsId,
+                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                ]]) {
+                ansiColor('xterm') {
+                    sh 'terraform apply -auto-approve'
+                    sh 'terraform show'
+                }
+                }
+            }
         }
-      }
+    } else {
+          // Run terraform destroy
+        stage('destroy') {
+        node {
+            withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: credentialsId,
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+            ]]) {
+            ansiColor('xterm') {
+                sh 'terraform destroy'
+            }
+            }
+        }
+        }
     }
-
-     // Run terraform destroy
-    // stage('destroy') {
-    //   node {
-    //     withCredentials([[
-    //       $class: 'AmazonWebServicesCredentialsBinding',
-    //       credentialsId: credentialsId,
-    //       accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-    //       secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-    //     ]]) {
-    //       ansiColor('xterm') {
-    //         sh 'terraform destroy'
-    //       }
-    //     }
-    //   }
-    // }
 
 /*
   if (env.BRANCH_NAME == 'master') {
