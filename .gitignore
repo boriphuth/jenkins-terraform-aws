@@ -6,3 +6,4 @@
 *.DS_Store
 *.terraform.tfstate*
 .terraform/*
+terraform.tfstate
