@@ -50,14 +50,14 @@ try {
 
    stage('approve_notification') {
      node {
-        office365ConnectorSend message: "Do you approve deployment? $jenkins_server_url/jenkins/job/$JOB_NAME", status:"SUCCESS", webhookUrl:'https://outlook.office.com/webhook/a0f1d097-a33c-4109-ab36-73d4c945fb5c@71ad2f62-61e2-44fc-9e85-86c2827f6de9/JenkinsCI/f8eba51747c24d228397ffba6305c907/16de5a6e-4f56-40b3-8359-ee0ac3075bb9'
+        office365ConnectorSend message: "Do you approve deployment? " + env.JOB_UR, status:"SUCCESS", webhookUrl:'https://outlook.office.com/webhook/a0f1d097-a33c-4109-ab36-73d4c945fb5c@71ad2f62-61e2-44fc-9e85-86c2827f6de9/JenkinsCI/f8eba51747c24d228397ffba6305c907/16de5a6e-4f56-40b3-8359-ee0ac3075bb9'
         // script {
         //    env.TERRAFORM_APPROVE = input message: 'User input required',
         //       parameters: [choice(name: 'Tag on Docker Hub', choices: 'no\nyes', description: 'Choose "yes" if you want to deploy this build')]
         // }
      }
    }
-   
+
     // stage('approve') {
     //   when {
     //     environment name: 'TERRAFORM_APPROVE', value: 'yes'
