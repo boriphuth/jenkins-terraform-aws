@@ -5,3 +5,4 @@
 */mykey*
 *.DS_Store
 *.terraform.tfstate*
+*./terraform*
