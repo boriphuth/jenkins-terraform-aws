@@ -8,7 +8,19 @@ try {
       checkout scm
     }
   }
-
+  stage(‘Set Terraform path’) {
+   node {
+   script {
+        def tfHome = tool name: ‘Terraform’
+        env.PATH = “${tfHome}:${env.PATH}”
+      }
+      ansiColor('xterm') {
+          sh "terraform --version"
+          sh 'terraform init'
+        }
+     }
+   }
+  
   // Run terraform init
   stage('init') {
     node {
