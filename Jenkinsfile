@@ -1,5 +1,3 @@
-pipeline {
- agent any
 // Jenkinsfile
 String credentialsId = 'awsCredentials'
 
@@ -91,5 +89,4 @@ finally {
   if (currentBuild.result == 'SUCCESS') {
     currentBuild.result = 'SUCCESS'
   }
-}
 }
