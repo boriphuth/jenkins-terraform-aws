@@ -80,6 +80,12 @@ try {
     }
   }
   currentBuild.result = 'SUCCESS'
+
+  post { 
+    always { 
+        cleanWs()
+    }
+  }
 }
 catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException flowError) {
   currentBuild.result = 'ABORTED'
