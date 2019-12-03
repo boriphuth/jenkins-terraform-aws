@@ -1,4 +1,6 @@
 // Jenkinsfile
+import groovy.json.JsonOutput
+
 String credentialsId = 'awsCredentials'
 
 try {
@@ -46,10 +48,29 @@ try {
     }
   }
 
-  if (env.BRANCH_NAME == 'master') {
-    // Run terraform apply
-    stage('apply') {
-      node {
+    stage('approve_notification') {
+        node {
+            // notifySlack("Do you approve deployment? $jenkins_server_url/jenkins/job/$JOB_NAME", notification_channel, [])
+            office365ConnectorSend message: "Do you approve deployment? $jenkins_server_url/jenkins/job/$JOB_NAME", status:"SUCCESS", webhookUrl:'https://outlook.office.com/webhook/a0f1d097-a33c-4109-ab36-73d4c945fb5c@71ad2f62-61e2-44fc-9e85-86c2827f6de9/JenkinsCI/f8eba51747c24d228397ffba6305c907/16de5a6e-4f56-40b3-8359-ee0ac3075bb9'
+            script {
+              env.TERRAFORM_APPROVE = input message: 'User input required',
+              parameters: [choice(name: 'Tag on Docker Hub', choices: 'no\nyes', description: 'Choose "yes" if you want to deploy this build')]
+        }
+    }
+
+    // stage('apply_changes') {
+    //     node {
+    //         sh "echo 'yes' | sudo terraform apply $jenkins_node_custom_workspace_path/workspace"
+    //         notifySlack("Deployment logs from jenkins server $jenkins_server_url/jenkins/job/$JOB_NAME/$BUILD_NUMBER/console", notification_channel, [])
+    //       }
+    //     }
+    // }
+    
+    stage('approve') {
+      when {
+        environment name: 'TERRAFORM_APPROVE', value: 'yes'
+      }
+       node {
         withCredentials([[
           $class: 'AmazonWebServicesCredentialsBinding',
           credentialsId: credentialsId,
@@ -58,13 +79,14 @@ try {
         ]]) {
           ansiColor('xterm') {
             sh 'terraform apply -auto-approve'
+            sh 'terraform show'
           }
         }
       }
     }
 
-    // Run terraform show
-    stage('show') {
+     // Run terraform destroy
+    stage('destroy') {
       node {
         withCredentials([[
           $class: 'AmazonWebServicesCredentialsBinding',
@@ -73,19 +95,46 @@ try {
           secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
         ]]) {
           ansiColor('xterm') {
-            sh 'terraform show'
+            sh 'terraform destroy'
           }
         }
       }
     }
-  }
-  currentBuild.result = 'SUCCESS'
 
-  post { 
-    always { 
-        cleanWs()
-    }
-  }
+//   if (env.BRANCH_NAME == 'master') {
+//     // Run terraform apply
+//     stage('apply') {
+//       node {
+//         withCredentials([[
+//           $class: 'AmazonWebServicesCredentialsBinding',
+//           credentialsId: credentialsId,
+//           accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+//           secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+//         ]]) {
+//           ansiColor('xterm') {
+//             sh 'terraform apply -auto-approve'
+//           }
+//         }
+//       }
+//     }
+
+//     // Run terraform show
+//     stage('show') {
+//       node {
+//         withCredentials([[
+//           $class: 'AmazonWebServicesCredentialsBinding',
+//           credentialsId: credentialsId,
+//           accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+//           secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+//         ]]) {
+//           ansiColor('xterm') {
+//             sh 'terraform show'
+//           }
+//         }
+//       }
+//     }
+//   }
+  currentBuild.result = 'SUCCESS'
 }
 catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException flowError) {
   currentBuild.result = 'ABORTED'
